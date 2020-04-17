@@ -14,7 +14,7 @@ def get_response(url):
 
 	if (operUrl.getcode() == 200):
 		data = operUrl.read()
-		jsonData = json.loads(data)
+		jsonData = json.loads(data.decode('utf-8'))
 	else:
 		print("Error receiving data", operUrl.getcode())
 	return jsonData
@@ -25,8 +25,11 @@ def get_buses(start_station):
 	jsonData = get_response(urlData)
 
 	for i in jsonData:
-		if start_station in i["Nm"].lower():
-			# print(i["Rn"])
+		if start_station.lower() in i["Nm"].lower():
+			print (i["Rn"])
+			if i["Rn"] is None:
+				# print(i["Rn"])
+				continue
 			x1 = re.sub(";", "", i["Rn"])
 			x2 = re.sub(", ", " ", x1)
 			x = re.split("\s", x2)
@@ -49,6 +52,7 @@ def get_buses(start_station):
 								line = (res['St'][i]['Id'],res['St'][i]['ST'], res['St'][i]['AZ'], res['St'][i]['LT'], res['St'][i]['LN'],res['St'][i]['SP'])#buses
 								print(str(line)[1:-1]+'\n')
 						break
+			routes.clear()
 
 
 
