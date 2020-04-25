@@ -50,6 +50,7 @@ def get_buses(start_station):
 							for u in range(len(res['Sc']['Crs'][0]['Ss'])):
 								if final_station.lower() in res['Sc']['Crs'][0]['Ss'][u]['Nm'].lower(): #проверяем если ли конечная остановка в маршруте 
 									print(res['R']['N'])
+									print('aaaa')
 									res = requests.get(url).json()
 									for i in range(len(res['V'])):
 										line = (res['St'][i]['Id'],res['St'][i]['ST'], res['St'][i]['AZ'], res['St'][i]['LT'], res['St'][i]['LN'],res['St'][i]['SP'])#положение всех автобусов маршрута
