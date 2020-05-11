@@ -186,7 +186,7 @@ jsonData = get_response(urlData)
 def get_buses(start_station, final_station):
 	bus_info.clear()
 	for i in jsonData:
-		if (start_station.lower() in i["Nm"].lower()):
+		if (int(start_station) == i["Id"]):
 			#print (i["Rn"]) #все маршруты к начальной  остановке
 			if i["Rn"] is None:
 				# print(i["Rn"])
@@ -211,7 +211,7 @@ def get_buses(start_station, final_station):
 						else:
 							res = requests.get(url).json()
 							for u in range(len(res['Sc']['Crs'][0]['Ss'])):
-								if (final_station.lower() in res['Sc']['Crs'][0]['Ss'][u]['Nm'].lower()): #проверяем если ли конечная остановка в маршруте
+								if (int(final_station) == res['Sc']['Crs'][0]['Ss'][u]['Id']): #проверяем если ли конечная остановка в маршруте
 									φ2 = res['Sc']['Crs'][0]['Ss'][u]['Pt']['Y']
 									λ2 = res ['Sc']['Crs'][0]['Ss'][u]['Pt']['X']
 									res = requests.get(url).json()
@@ -219,7 +219,7 @@ def get_buses(start_station, final_station):
 										lt, ln = utm.to_latlon(res['St'][i]['LN'], res['St'][i]['LT'], 43, zone_letter='T', northern=None, strict=True)
 										line = (res['St'][i]['Id'], res['St'][i]['AZ'], res['St'][i]['SP'])#положение всех автобусов маршрута
 										if math.fabs(find_azimut(φ1, λ1, φ2, λ2) - res['St'][i]['AZ']) <= 60:
-											bus_info.append([busnum, [lt, ln], res['St'][i]['Id'],get_bus_number(res['St'][i]['Id'], busnum)])
+											bus_info.append([busnum, [lt, ln], res['St'][i]['Id'], get_bus_number(res['St'][i]['Id'], busnum)])
 											#bus_info.append([busnum, res['St'][i]['Id'], get_bus_number(res['St'][i]['Id'], busnum)])
 						break
 			routes.clear()
