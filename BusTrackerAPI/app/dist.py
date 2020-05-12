@@ -5,19 +5,70 @@ import math
 import json
 import urllib.request
 import re
-import requests
-
 from . import bus
-
-final = []
+import requests
+from importlib import import_module
 
 routes = []
 dell = []
-
+l = []
 bus_info = []
 route = []
-bus_lt = 0
-bus_ln = 0
+# bus_lt = 0
+# bus_ln = 0
+# station_lt = 0
+# station_ln = 0
+
+# ...............................
+def stops_quantity(route,start_st,bus_lt2,bus_ln2):
+	try:
+		# module = import_module('stops'+str(route))
+		module = 'stops'+str(route) 
+		# from .stops import module
+		module = import_module('stops'+str(route))
+		# from . import 'stops'+str(route)
+		start_index = -1
+		maxi = 10000
+		index = -1
+		id_i = -1
+		l = module.stops
+	except Exception as ex:
+		print("Not found")
+
+	#по айди нашли в лсте индекс где остановку юсера
+	for x in range(0, len(l)):
+		if l[x][0] == start_st:
+			start_index = x
+
+	#нашли ближайшую остановку к автобусу ее индекс и расстояние. чтобы избежать противоположных 
+	# остановок проверям чтобы ее следующая остановка также была ближе к юсеру
+
+	if str(route) == '63' or  str(route) == '63А':
+		for i in range(0, len(l)):
+			if get_dist(l[i][1][0], l[i][1][1], bus_lt2, bus_ln2) < maxi:
+				maxi = get_dist(l[i][1][0], l[i][1][1], bus_lt2, bus_ln2)
+				index = i
+				id_i = l[i][0]
+		# print("автобус возле этой остановки "+ str(id_i))
+	else: 
+		for i in range(0, len(l)):
+			if get_dist(l[i][1][0], l[i][1][1], bus_lt2, bus_ln2) < maxi and math.fabs(i-start_index) <= int(len(l))/2:
+				maxi = get_dist(l[i][1][0], l[i][1][1], bus_lt2, bus_ln2)
+				index = i
+				id_i = l[i][0]
+		# print("автобус возле этой остановки "+ str(id_i))
+
+	# print("автобус возле этой остановки "+ str(id_i), index, str(start_index)+" <-start ind")
+	#надо проверить ближайшую остановку автобус проехал или проедет(нужно ли брать ближайшую остановку к количеству остановок)
+	#если расстояние между ближейшей к автобусу остановкой и остановкой юсера меньше чем расстояние между автобусом и остановкой юсера 
+
+	if get_dist(l[index][1][0], l[index][1][1], l[start_index][1][0], l[start_index][1][1]) < get_dist(bus_lt2, bus_ln2, l[start_index][1][0], l[start_index][1][1]):
+		quantity = math.fabs(index - start_index) #берем к количеству
+	else:
+		quantity = math.fabs(index - start_index)-1 #не берем
+	return quantity
+	l.clear()
+	
 
 # ..................................
 def get_dist(lt1, ln1, lt2,ln2):
@@ -46,7 +97,7 @@ def get_route(route_num):
 			for point in points:
 				route.append([point['Y'], point['X']])
 
-def route_dir(station_lt, station_ln, bus_lt, bus_ln):
+def route_dir(bus_lt, bus_ln, station_lt, station_ln):
 	dist_list = [] 
 	segments = 0
 	# расстояние до автобуса всех точек
@@ -136,7 +187,7 @@ def route_dir(station_lt, station_ln, bus_lt, bus_ln):
 	# к сумме расстояний добавить расстояние от автобуса до ближ точки и от остановки до ее ближ точки
 	segments += min_value + min_value_st
 	# print(segments, bus_lt, bus_ln, min_value, min_value_st, min_index, min_index_st, j1,j2,j3)
-
+	# print(segments)
 	return segments
 
 
@@ -183,10 +234,9 @@ def get_response(url):
 urlData = "https://www.citybus.kz/almaty/Monitoring/GetStops/?_=1586756337290"
 jsonData = get_response(urlData)
 
-def get_buses(start_station, final_station):
-	bus_info.clear()
+def get_buses(start_id,final_id ):
 	for i in jsonData:
-		if (int(start_station) == i["Id"]):
+		if int(start_id) == i["Id"]:
 			#print (i["Rn"]) #все маршруты к начальной  остановке
 			if i["Rn"] is None:
 				# print(i["Rn"])
@@ -196,12 +246,14 @@ def get_buses(start_station, final_station):
 			x = re.split("\s", x2) #регуляр что бы очистить стринг подходящих маршрутов
 			φ1 = i["Pt"]["Y"]
 			λ1 = i["Pt"]["X"]
+			station_lt = i["Pt"]["Y"]
+			station_ln = i["Pt"]["X"]
 			for i in range(1,len(x)-1):
 				routes.append(x[i])
 			for route in routes:
 				for busnum in bus.buses:
 					if str(busnum) == route: 
-						url = bus.buses[busnum] #в файле bus.py берем нужную ссылку на маршрут
+						url = bus.buses[busnum] #в файле bus.py берем нужную ссылку на маршрут 
 						try:
 							res = requests.get(url).json()
 						except Exception as ex:
@@ -211,34 +263,51 @@ def get_buses(start_station, final_station):
 						else:
 							res = requests.get(url).json()
 							for u in range(len(res['Sc']['Crs'][0]['Ss'])):
-								if (int(final_station) == res['Sc']['Crs'][0]['Ss'][u]['Id']): #проверяем если ли конечная остановка в маршруте
+								if int(final_id) == res['Sc']['Crs'][0]['Ss'][u]['Id']: #проверяем если ли конечная остановка в маршруте 
 									φ2 = res['Sc']['Crs'][0]['Ss'][u]['Pt']['Y']
 									λ2 = res ['Sc']['Crs'][0]['Ss'][u]['Pt']['X']
+									print(res['R']['N'] + " ваш номер маршрута")
+									m_distance = 100000
+									quantity = 10000
+									bus_nb = 0
+									llt = -1
+									lln = -1
+									speed = -1
 									res = requests.get(url).json()
 									for i in range(len(res['V'])):
 										lt, ln = utm.to_latlon(res['St'][i]['LN'], res['St'][i]['LT'], 43, zone_letter='T', northern=None, strict=True)
 										line = (res['St'][i]['Id'], res['St'][i]['AZ'], res['St'][i]['SP'])#положение всех автобусов маршрута
+										
 										if math.fabs(find_azimut(φ1, λ1, φ2, λ2) - res['St'][i]['AZ']) <= 60:
-											bus_info.append([busnum, [lt, ln], res['St'][i]['Id'], get_bus_number(res['St'][i]['Id'], busnum)])
-											#bus_info.append([busnum, res['St'][i]['Id'], get_bus_number(res['St'][i]['Id'], busnum)])
+											# print(busnum, lt, ln, start_id)
+											get_route(busnum)
+											# print(get_bus_number(res['St'][i]['Id'],busnum),route_dir(lt, ln, station_lt, station_ln), stops_quantity(busnum,start_id,lt, ln))
+											
+								
+											if float(route_dir(lt, ln, station_lt, station_ln)) < m_distance and stops_quantity(busnum,start_id,lt, ln)< quantity :
+												m_distance = route_dir(lt, ln, station_lt, station_ln)
+												bus_nb = get_bus_number(res['St'][i]['Id'],busnum)
+												quantity = stops_quantity(busnum,start_id,lt, ln)
+												llt, lln = lt, ln
+											else:
+												continue
+									# print(bus_nb,m_distance)
+									bus_info.append([busnum,bus_nb, int((m_distance/30)*60+(stops_quantity(busnum,start_id,llt,lln)*2))])
+									# print(bus_nb,m_distance, llt, lln)
+									# if int(stops_quantity(busnum,start_id,llt,lln)) == 0:
+									# 	# print("Прибывает")
+									# 	bus_info.append([busnum,bus_nb,0])
+									# else:
+									# 	# print((m_distance/30)*60+(stops_quantity(busnum,start_id,llt,lln)*2))
+									# 	bus_info.append([busnum,bus_nb,(m_distance/30)*60+(stops_quantity(busnum,start_id,llt,lln)*2)])
+
+
+
+						# bus_info.clear()			
+
+											# print(lt, ln, res['St'][i]['SP'])
+											# print(str(line))
+											# bus_info.append([busnum, [lt, ln], res['St'][i]['Id']])
+
 						break
 			routes.clear()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

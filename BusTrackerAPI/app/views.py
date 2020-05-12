@@ -15,8 +15,8 @@ class RouteView(APIView):
     lookup_field = 'id'
 
     def post(self, request):
-        #Bus.objects.all().delete()
-        #Route.objects.all().delete()
+        Bus.objects.all().delete()
+        Route.objects.all().delete()
 
         serializer = RouteSerializer(data=request.data)
 
@@ -27,20 +27,23 @@ class RouteView(APIView):
 
             get_buses(first, second)
 
-            for station in jsonData:
-                if (int(first) == station["Id"]):
-                    station_lt = station["Pt"]["Y"]
-                    station_ln = station["Pt"]["X"]
+            # for station in jsonData:
+            #     if (first.lower() in station["Nm"].lower()):
+            #         station_lt = station["Pt"]["Y"]
+            #         station_ln = station["Pt"]["X"]
 
 
             for i in range(0, len(bus_info)):
-                get_route(bus_info[i][0])
-                bus_lt, bus_ln = bus_info[i][1]
-                dist = route_dir(station_lt, station_ln, bus_lt, bus_ln)
-                Bus.objects.create(name=bus_info[i][0], number=bus_info[i][3], distance=dist, route_id=serializer.data['id'])
+                # get_route(bus_info[i][0])
+                # bus_lt, bus_ln = bus_info[i][1]
+                # dist = route_dir(station_lt, station_ln, bus_lt, bus_ln)
+                Bus.objects.create(name=bus_info[i][0], number=bus_info[i][1], distance=bus_info[i][2], route_id=serializer.data['id'])
 
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        bus_info.clear()
+        Bus.objects.all().delete()
+        Route.objects.all().delete()
 
 
 

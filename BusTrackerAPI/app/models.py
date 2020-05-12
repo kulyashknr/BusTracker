@@ -3,8 +3,8 @@ from django.db import models
 
 # Create your models here.
 class Route(models.Model):
-    start_station = models.CharField(max_length=255)
-    end_station = models.CharField(max_length=255)
+    start_station = models.IntegerField()
+    end_station = models.IntegerField()
 
 
 class Bus(models.Model):
