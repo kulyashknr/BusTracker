@@ -12,6 +12,8 @@ class Bus(models.Model):
     number = models.CharField(max_length=100)
     route = models.ForeignKey(Route, on_delete=models.CASCADE, related_name='route')
     distance = models.FloatField()
+    lat = models.CharField(max_length=250, null=True)
+    lon = models.CharField(max_length=250, null=True)
     #time = models.CharField(max_length=100)
 
 

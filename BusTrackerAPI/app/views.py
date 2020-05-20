@@ -37,13 +37,13 @@ class RouteView(APIView):
                 # get_route(bus_info[i][0])
                 # bus_lt, bus_ln = bus_info[i][1]
                 # dist = route_dir(station_lt, station_ln, bus_lt, bus_ln)
-                Bus.objects.create(name=bus_info[i][0], number=bus_info[i][1], distance=bus_info[i][2], route_id=serializer.data['id'])
+                Bus.objects.create(name=bus_info[i][0], number=bus_info[i][1], distance=bus_info[i][2], lat = bus_info[i][3], lon = bus_info[i][4], route_id=serializer.data['id'])
 
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        bus_info.clear()
         Bus.objects.all().delete()
         Route.objects.all().delete()
+    
 
 
 
